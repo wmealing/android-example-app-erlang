@@ -26,7 +26,7 @@ void test_nif(std::string nif)
     }
 
     void* sym = dlsym(lib, "nif_init");
-    printf("%s: nif_init() => %lx\n", nif.c_str(), sym);
+    printf("%s: nif_init() => %p\n", nif.c_str(), sym);
 
     // dlclose(lib);
 }
@@ -123,16 +123,7 @@ const char* startErlang(std::string root_dir, std::string log_dir)
             update_dir.c_str(),
             "-start_epmd",
             "false",
-            //"-kernel",
-            //"inet_dist_use_interface",
-            //"{127,0,0,1}",
-            "-elixir",
-            "ansi_enabled",
-            "true",
             "-noshell",
-            "-s",
-            "elixir",
-            "start_cli",
             "-mode",
             "interactive",
             "-config",
@@ -224,3 +215,4 @@ static void logger_func()
         __android_log_write(ANDROID_LOG_DEBUG, tag, buf);
     }
 }
+
