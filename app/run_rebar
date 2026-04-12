@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+BASE=`pwd`
+APP_FILE="$BASE/src/main/assets/app.zip"
+export MIX_ENV=prod
+export MIX_TARGET=android
+
+# using the right runtime versions
+cd erlang-app/erlang_app
+
+if [ -f "$APP_FILE" ]; then
+  rm "$APP_FILE"
+fi
+
+rebar3 as prod release && \
+  cd "_build/prod/rel/erlang_app" && \
+  zip -9r "$APP_FILE" lib/ releases/ --exclude "*.so"
