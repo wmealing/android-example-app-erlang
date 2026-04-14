@@ -31,6 +31,17 @@ class MainActivity : Activity() {
                     reportFullyDrawn()
                 }
             }
+
+            @Deprecated("Deprecated in Java")
+            override fun onReceivedError(view: WebView, errorCode: Int, description: String, failingUrl: String) {
+                // If the connection was refused, it's likely the server hasn't started yet.
+                // Retry loading the page after 500ms.
+                if (errorCode == ERROR_CONNECT || errorCode == ERROR_HOST_LOOKUP) {
+                    if (failingUrl.contains("127.0.0.1:8080")) {
+                        view.postDelayed({ view.reload() }, 500)
+                    }
+                }
+            }
         }
 
         if (bridge != null) {

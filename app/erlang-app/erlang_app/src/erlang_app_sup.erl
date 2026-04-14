@@ -31,7 +31,11 @@ init([]) ->
         intensity => 0,
         period => 1
     },
-    ChildSpecs = [#{id => android_bridge,
+    ChildSpecs = [#{id => web_page,
+                    start => {web_page, start_link, []},
+                    type => worker,
+                    restart => permanent},
+                  #{id => android_bridge,
                     start => {android_bridge, start_link, []},
                     type => worker,
                     restart => permanent}],

@@ -23,8 +23,8 @@ init([]) ->
         _ ->
             Port = list_to_integer(PortStr),
             {ok, Socket} = gen_tcp:connect("localhost", Port, [binary, {packet, 4}, {active, true}]),
-            %% Let's send a default URL to show something
-            gen_server:cast(self(), {load_url, <<"https://www.erlang.org">>}),
+            %% Delay the initial load to ensure wade is up and listening on :8080
+            timer:apply_after(500, gen_server, cast, [self(), {load_url, <<"http://127.0.0.1:8080/">>}]),
             {ok, #state{socket = Socket, port = Port}}
     end.
 
