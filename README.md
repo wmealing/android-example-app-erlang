@@ -1,17 +1,38 @@
-# TodoApp Android: An Android Sample App
+# Erlang Android Example App
 
-This Android Studio project wraps the [Desktop Sample App](https://github.com/elixir-desktop/desktop-example-app) to run on an Android phone.
+> **Note:** This project has been transitioned to **Erlang**. While some files and packages still use Elixir-based naming (e.g., `io.elixirdesktop`), the backend logic and runtime are purely Erlang-focused.
+
+This Android Studio project demonstrates how to run an Erlang/OTP application on an Android device, using a WebView as the primary user interface.
+
+## Recent Fixes & Robustness
+
+To address `net::err_connection_refused` errors during the initial startup, the following improvements were implemented:
+
+1.  **Boot Order Swap**: Updated `erlang_app_sup.erl` to start the `web_page` server before the `android_bridge`. This ensures the server begins initialization while the bridge is still setting up its connection.
+2.  **Delayed Initial Load**: Modified `android_bridge.erl` to wait 500ms before sending the initial `load_url` command. This delay gives the Erlang web server sufficient time to bind to its port and start listening.
+3.  **Automatic Retry**: Added a retry mechanism in `MainActivity.kt`. If the Android WebView encounters a connection error (`ERROR_CONNECT` or `ERROR_HOST_LOOKUP`) when attempting to reach the local server, it will automatically retry after a 500ms delay.
+4.  **Route Update**: Changed the default landing page to the root `/`, which now displays an `erlang:memory()` status table.
+
+These changes significantly improve the reliability of the startup sequence, mitigating race conditions between the Erlang backend and the Android frontend.
+
+## How the Erlang Code Works
+
+The Erlang side of the application is composed of three main modules:
+
+*   **`erlang_app_sup`**: The top-level supervisor that manages the `web_page` and `android_bridge` processes.
+*   **`web_page`**: A lightweight web server (utilizing Erlang's built-in `inets`) that serves the application's UI.
+*   **`android_bridge`**: Manages the communication channel between the Erlang VM and the Android environment via a TCP socket, allowing the backend to trigger actions like page loads in the WebView.
 
 ## Runtime Notes
 
-The pre-built Erlang runtime for Android ARM/ARM64/x86 is embedded in this example git repository. These native runtime files include Erlang/OTP and the exqlite nif to use SQLite on the mobile. These runtimes are generated using the CI of the [Desktop Runtime](https://github.com/elixir-desktop/runtimes) repository.
+The pre-built Erlang runtime for Android ARM/ARM64/x86 is embedded in this repository. These native runtime files include Erlang/OTP and the `exqlite` NIF for SQLite support. These runtimes are generated via the [Desktop Runtime](https://github.com/elixir-desktop/runtimes) CI.
 
-Because Erlang/OTP has many native hooks for networking and cryptographics the Erlang version used to compile your App must match the pre-built binary release that is embedded. In this example that is Erlang/OTP 26.2.5. This sample is shipping with a `.tool-versions` file that `asdf` will automatically use to automate this requirement.
+Because Erlang/OTP has native hooks for networking and cryptography, the Erlang version used for local development must match the bundled runtime (currently **Erlang/OTP 26.2.5**). A `.tool-versions` file is included for use with `asdf`.
 
 ## How to build & run
 
-1. Install [Android Studio](https://developer.android.com/studio) + NDK.
-1. Install [asdf](https://asdf-vm.com/guide/getting-started.html), for example:
+1.  **Install Android Studio + NDK.**
+2.  **Install [asdf](https://asdf-vm.com/):**
 
     ```shell
     sudo apt install curl
@@ -19,43 +40,23 @@ Because Erlang/OTP has many native hooks for networking and cryptographics the E
     export PATH="$PATH:~/bin"
     ```
 
-1. Install Erlang/OTP (with openssl) in the same version as the bundled runtime edition:
+3.  **Install the matching Erlang version:**
 
     ```shell
     asdf plugin add erlang
-    asdf plugin add elixir
-    asdf plugin add nodejs
-    cd app && asdf install
+    cd app/erlang-app/erlang_app && asdf install
     ```
 
-1. Go to "Files -> New -> Project from Version Control" and enter this URL: [https://github.com/elixir-desktop/android-example-app/] or open your locally cloned directory.
-
-1. Start the App
+4.  **Open the project** in Android Studio and run it on a device or emulator.
 
 ## Customize app name and branding
 
-Update these places with your package name:
+Update the following to change the identity of your app:
 
-1) App name in [strings.xml](app/src/main/res/values/strings.xml#L2) and [settings.gradle](settings.gradle)
-1) Package names in [Bridge.kt:1](app/src/main/java/io/elixirdesktop/example/Bridge.kt#L1) and [MainActivity.kt:1](app/src/main/java/io/elixirdesktop/example/MainActivity.kt#L1) (rename `package io.elixirdesktop.example` -> `com.yourapp.name` or use the Android Studios refactor tool)
-1) App icon: [ic_launcher_foreground.xml](app/src/main/res/drawable-v24/ic_launcher_foreground.xml) and [ic_launcher-playstore.png](app/src/main/ic_launcher-playstore.png)
-1) App colors: [colors.xml](app/src/main/res/values/colors.xml) and launcher background [ic_launcher_background.xml](app/src/main/res/values/ic_launcher_background.xml)
-
-## Known todos
-
-### Initial Startup could be faster
-
-Running the app for the first time will extract the full Elixir & App runtime at start. On my Phone this takes around 10 seconds. After that a cold app startup takes ~3-4 seconds.
-
-### Menus and other integration not yet available
-
-This sample only launch the elixir app and shows it in an Android WebView. There is no integration yet with the Android Clipboard, sharing or other OS capabilities. They can though easily be added to the `Bridge.kt` file when needed.
-
-## Other notes
-
-- Android specific settings, icons and metadata are all contained in this Android Studio wrapper project.
-
-- `Bridge.kt` and the native library are doing most of the wrapping of the Elixir runtime.
+1.  **App Name**: [strings.xml](app/src/main/res/values/strings.xml) and [settings.gradle](settings.gradle)
+2.  **Package Names**: [Bridge.kt](app/src/main/java/io/elixirdesktop/example/Bridge.kt) and [MainActivity.kt](app/src/main/java/io/elixirdesktop/example/MainActivity.kt)
+3.  **Icons**: [ic_launcher_foreground.xml](app/src/main/res/drawable-v24/ic_launcher_foreground.xml) and [ic_launcher-playstore.png](app/src/main/ic_launcher-playstore.png)
+4.  **Colors**: [colors.xml](app/src/main/res/values/colors.xml) and [ic_launcher_background.xml](app/src/main/res/values/ic_launcher_background.xml)
 
 ## Screenshots
 
@@ -64,6 +65,6 @@ This sample only launch the elixir app and shows it in an Android WebView. There
 
 ## Architecture
 
-![App](/android_elixir.png?raw=true "Architecture")
+![Architecture](/android_elixir.png?raw=true "Architecture Diagram")
 
-The Android App is initializing the Erlang VM and starting it up with a new environment variable `BRIDGE_PORT`. This environment variable is used by the `Bridge` project to connect to a local TCP server _inside the android app_. Through this new TCP communication channel all calls that usually would go to `wxWidgets` are now redirected. The Android side of things implements handling in `Bridge.kt`.  
+The Android App initializes the Erlang VM and provides a `BRIDGE_PORT` environment variable. The Erlang `android_bridge` connects to this port to establish a TCP channel for cross-environment communication, redirecting UI-related calls to the Android `Bridge.kt` implementation.
